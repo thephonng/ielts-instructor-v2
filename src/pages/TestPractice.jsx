@@ -27,8 +27,6 @@ const READING_TYPES = [
   { value: 'mcq_single',        label: 'MCQ — Single Answer',      icon: MCQSIcon },
   { value: 'mcq_multi',         label: 'MCQ — Multiple Answers',   icon: MCQMIcon },
   { value: 'gap_filling',       label: 'Gap Filling',              icon: GFIcon },
-  { value: 'diagram_label',     label: 'Diagram Label',            icon: DLIcon },
-  { value: 'map_label',         label: 'Map Label',                icon: MLIcon },
 ];
 
 const LISTENING_TYPES = [
