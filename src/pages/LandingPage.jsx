@@ -239,7 +239,7 @@ export default function LandingPage({ setPage, user }) {
         </div>
 
         <div style={{ display:'flex', gap:52, marginTop:68, flexWrap:'wrap', justifyContent:'center' }}>
-          {[['300+','Đề luyện Reading'],['100+','Đề luyện Listening'],['500+','Đề luyện Writing']].map(([n,l]) => (
+          {[['300+','Đề luyện Reading'],['400+','Đề luyện Writing'],['4000+','Theo dõi MXH']].map(([n,l]) => (
             <div key={l} style={{ textAlign:'center', color:'white' }}>
               <div style={{ fontSize:34, fontWeight:900, letterSpacing:'-1px' }}>{n}</div>
               <div style={{ fontSize:13, opacity:.72, marginTop:3 }}>{l}</div>
