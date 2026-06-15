@@ -492,8 +492,8 @@ export default function Dashboard({ user, profile, isPremium, setPage }) {
 
           {/* Stats */}
           <div className="ds stat-row" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-            <StatCard icon={<IconWriting />} label="Band Writing" value={lastWriting} sub={writingData.length > 1 ? `Từ Band ${writingData[0]?.score}` : null}/>
-            <StatCard icon={<IconBook />} label="Bài đọc đã làm" value={skillCounts.reading} sub="tổng bài hoàn thành"/>
+            <StatCard icon={<IconWriting />} label="Band Writing" value={lastWriting} sub={writingData.length > 1 ? `Từ Band ${writingData[0]?.score}` : null} onClick={() => navigate('/writing')}/>
+            <StatCard icon={<IconBook />} label="Bài đọc đã làm" value={skillCounts.reading} sub="tổng bài hoàn thành" onClick={() => navigate('/testpractice')}/>
             <StatCard icon={<IconChart />} label="Xếp hạng tháng" value={myLbRank > 0 ? `#${myLbRank}` : '—'} sub="bảng tháng này" onClick={() => navigate('/leaderboard')}/>
           </div>
 
