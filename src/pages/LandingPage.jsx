@@ -55,6 +55,13 @@ const GLOBAL_CSS = `
     .hamburger-btn { display: none !important; }
     .mobile-menu-overlay { display: none !important; }
   }
+
+  /* FIX: Contact form year/email stack on small screens */
+  @media (max-width: 480px) {
+    .contact-dob-email-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
 `;
 
 // ── NAV DATA ───────────────────────────────────────────────────────────────────
@@ -110,7 +117,8 @@ export default function LandingPage({ setPage, user }) {
   const [sending, setSending]     = useState(false);
   const [form, setForm]           = useState({ name:'', phone:'', dob:'', email:'', role:'', course:'', msg:'' });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileSubMenu, setMobileSubMenu]   = useState(null); // null | NAV item
+  // FIX: mobileSubMenu now tracks which NAV item is expanded (null = top level)
+  const [mobileSubMenu, setMobileSubMenu]   = useState(null);
   const contactRef  = useRef(null);
   const featuresRef = useRef(null);
   const entranceRef = useRef(null);
@@ -178,10 +186,14 @@ export default function LandingPage({ setPage, user }) {
     }
   };
 
-  // ── Mobile menu item action ────────────────────────────────────────────────
-  const handleMobileNavItem = (navItem) => {
+  // ── Mobile menu: handle item action ──────────────────────────────────────
+  // Called when user taps a sub-item inside a mobile nav section
+  const handleMobileSubItemClick = (navItem) => {
+    setMobileMenuOpen(false);
+    setMobileSubMenu(null);
     if (navItem.onItemClick === 'entrance') {
-      scrollTo(entranceRef);
+      // Small delay so menu closes before scroll
+      setTimeout(() => entranceRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
     } else if (navItem.onItemClick === 'auth') {
       openAuth('register');
     }
@@ -216,7 +228,7 @@ export default function LandingPage({ setPage, user }) {
                   : onItemClick === 'auth'
                   ? () => openAuth('register')
                   : null
-                }    
+                }
             />
           ))}
         </div>
@@ -256,7 +268,10 @@ export default function LandingPage({ setPage, user }) {
           onClick={(e) => { if (e.target === e.currentTarget) { setMobileMenuOpen(false); setMobileSubMenu(null); } }}
         >
           {/* Backdrop */}
-          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)' }} onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }} />
+          <div
+            style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)' }}
+            onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }}
+          />
 
           {/* Panel */}
           <div style={{
@@ -268,8 +283,10 @@ export default function LandingPage({ setPage, user }) {
             {/* Panel header */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 20px', borderBottom:'1px solid #f0f0f0' }}>
               {mobileSubMenu ? (
-                <button onClick={() => setMobileSubMenu(null)}
-                  style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', fontSize:15, fontWeight:700, color:'#333', fontFamily:'inherit', padding:0 }}>
+                <button
+                  onClick={() => setMobileSubMenu(null)}
+                  style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', fontSize:15, fontWeight:700, color:'#333', fontFamily:'inherit', padding:0 }}
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="15 18 9 12 15 6"/>
                   </svg>
@@ -278,8 +295,10 @@ export default function LandingPage({ setPage, user }) {
               ) : (
                 <span style={{ fontSize:15, fontWeight:800, color:'#222' }}>Xin chào, Khách</span>
               )}
-              <button onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }}
-                style={{ background:'#f4f4f5', border:'none', width:32, height:32, borderRadius:'50%', fontSize:18, cursor:'pointer', color:'#666', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <button
+                onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }}
+                style={{ background:'#f4f4f5', border:'none', width:32, height:32, borderRadius:'50%', fontSize:18, cursor:'pointer', color:'#666', display:'flex', alignItems:'center', justifyContent:'center' }}
+              >
                 ×
               </button>
             </div>
@@ -287,7 +306,7 @@ export default function LandingPage({ setPage, user }) {
             {/* Panel body */}
             <div style={{ flex:1, overflowY:'auto', padding:'8px 0' }}>
               {!mobileSubMenu ? (
-                // Main menu
+                // Main menu — top-level nav items
                 <>
                   {NAV.map((navItem) => (
                     <MobileMenuItem
@@ -302,19 +321,21 @@ export default function LandingPage({ setPage, user }) {
                   <MobileMenuItem label="Đăng ký miễn phí" onClick={() => openAuth('register')} highlight />
                 </>
               ) : (
-                // Sub menu items
-                mobileSubMenu.items.map((item) => (
-                  <div
-                    key={item.label}
-                    onClick={() => handleMobileNavItem(mobileSubMenu)}
-                    style={{ padding:'14px 20px', cursor:'pointer', borderBottom:'1px solid #f9f9f9' }}
-                    onMouseEnter={e => e.currentTarget.style.background = RL}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <div style={{ fontSize:15, fontWeight:700, color:'#222', marginBottom:3 }}>{item.label}</div>
-                    <div style={{ fontSize:13, color:'#aaa' }}>{item.sub}</div>
-                  </div>
-                ))
+                // Sub-menu: flat list of items, NO dropdown — tap directly triggers action
+                <>
+                  {mobileSubMenu.items.map((item) => (
+                    <div
+                      key={item.label}
+                      onClick={() => handleMobileSubItemClick(mobileSubMenu)}
+                      style={{ padding:'14px 20px', cursor:'pointer', borderBottom:'1px solid #f9f9f9' }}
+                      onMouseEnter={e => e.currentTarget.style.background = RL}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ fontSize:15, fontWeight:700, color:'#222', marginBottom:3 }}>{item.label}</div>
+                      <div style={{ fontSize:13, color:'#aaa' }}>{item.sub}</div>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
 
@@ -431,7 +452,7 @@ export default function LandingPage({ setPage, user }) {
               Tinh thông mọi kĩ năng tiếng Anh với bộ chương trình đào tạo chất lượng
             </h2>
             <p style={{ color:'#888', maxWidth:320, lineHeight:1.8, fontSize:15, paddingTop:6 }}>
-              Học tiếng Anh thật dễ dàng với lộ trình Học & Luyện Thi toàn diện, được cá nhân hóa cho từng người.
+              Học tiếng Anh thật dễ dàng với lộ trình Học &amp; Luyện Thi toàn diện, được cá nhân hóa cho từng người.
             </p>
           </div>
 
@@ -521,8 +542,8 @@ export default function LandingPage({ setPage, user }) {
                 <ContactField label="Số điện thoại (*)" placeholder="09x xxx xxxx" prefix="+84"
                   value={form.phone} onChange={v => setForm(f => ({...f, phone:v}))} />
 
-                {/* Năm sinh + Email — stacked on mobile, row on desktop */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                {/* FIX: added className for responsive override at 480px */}
+                <div className="contact-dob-email-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                   <ContactField label="Năm sinh" placeholder="VD: 2000"
                     value={form.dob}   onChange={v => setForm(f => ({...f, dob:v}))} />
                   <ContactField label="Email" placeholder="Địa chỉ email"
@@ -627,7 +648,7 @@ function MobileMenuItem({ label, hasChildren, onClick, highlight }) {
   );
 }
 
-// ── Sub-components (unchanged) ─────────────────────────────────────────────────
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function NavDropdown({ label, items, open, onToggle, onClose, onItemClick }) {
   return (
