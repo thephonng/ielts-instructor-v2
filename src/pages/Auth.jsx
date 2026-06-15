@@ -97,8 +97,8 @@ export default function Auth() {
   }
 
   const leftPanel = {
-    login: { title: 'Chào mừng trở lại!', sub: 'Tiếp tục hành trình IELTS của bạn.', quote: '"Mỗi ngày học là một bước gần hơn đến band 7.0+"', stats: ['2,400+ học viên', 'Band TB tăng 1.2', '98% hài lòng'] },
-    register: { title: 'Bắt đầu miễn phí', sub: 'Tạo tài khoản và học ngay hôm nay.', quote: '"AI chấm bài, bạn chỉ cần tập trung học."', stats: ['Miễn phí mãi mãi', 'AI chấm Writing', 'Streak hàng ngày'] },
+    login: { title: 'Chào mừng trở lại!', sub: 'Tiếp tục hành trình IELTS của bạn.', quote: '"Mỗi ngày học là một bước gần hơn đến band 7.0+"', stats: ['4000+ người theo dõi MXH', 'Tự chủ quá trình học bản thân', 'Trợ lý ảo hỗ trợ 24/7'] },
+    register: { title: 'Bắt đầu miễn phí', sub: 'Tạo tài khoản và học ngay hôm nay.', quote: '"AI chấm bài, bạn chỉ cần tập trung học."', stats: ['Người bạn luyện viết đồng hành', 'Bất kể ngày đêm', 'Streak hàng ngày'] },
     forgot: { title: 'Quên mật khẩu?', sub: 'Nhập email để nhận link đặt lại.', quote: '"Không sao, chúng tôi luôn ở đây giúp bạn."', stats: [] },
   }
 
