@@ -492,7 +492,7 @@ export default function Dashboard({ user, profile, isPremium, setPage }) {
 
           {/* Stats */}
           <div className="ds stat-row" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-            <StatCard icon={<IconWriting />} label="Band Writing" value={lastWriting} sub={writingData.length > 1 ? `Từ Band ${writingData[0]?.score}` : null} onClick={() => navigate('/writing')}/>
+            <StatCard icon={<IconWriting />} label="Band Writing" value={lastWriting} sub={writingData.length > 1 ? `Từ Band ${writingData[0]?.score}` : null} onClick={() => navigate('/testpractice')}/>
             <StatCard icon={<IconBook />} label="Bài đọc đã làm" value={skillCounts.reading} sub="tổng bài hoàn thành" onClick={() => navigate('/testpractice')}/>
             <StatCard icon={<IconChart />} label="Xếp hạng tháng" value={myLbRank > 0 ? `#${myLbRank}` : '—'} sub="bảng tháng này" onClick={() => navigate('/leaderboard')}/>
           </div>
@@ -500,7 +500,7 @@ export default function Dashboard({ user, profile, isPremium, setPage }) {
           {/* Writing chart */}
           {writingData.length > 1 && (
             <div className="ds" style={{ background:WHITE, borderRadius:20, padding:'22px 24px', border:`1.5px solid ${BORDER_MID}`, boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
-              <SectionHeader title="Tiến độ Band Writing" sub={`${writingData.length} lần nộp`} action="Xem tất cả" onAction={() => navigate('/writing')}/>
+              <SectionHeader title="Tiến độ Band Writing" sub={`${writingData.length} lần nộp`} action="Xem tất cả" onAction={() => navigate('/testpractice')}/>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={writingData} margin={{ top:5, right:10, left:-20, bottom:0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F9FAFB"/>
