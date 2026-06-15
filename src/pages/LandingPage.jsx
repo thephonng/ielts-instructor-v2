@@ -29,6 +29,7 @@ const GLOBAL_CSS = `
   @keyframes floatUp   { 0%,100% { transform: translateY(0); }  50% { transform: translateY(-14px); } }
   @keyframes floatSlow { 0%,100% { transform: translateY(0); }  50% { transform: translateY(-8px); }  }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
   ::-webkit-scrollbar       { width: 6px; }
   ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
@@ -42,6 +43,18 @@ const GLOBAL_CSS = `
   .cta-btn:hover { transform: translateY(-2px) !important; }
   .explore-btn:hover { background: rgba(255,255,255,0.28) !important; }
   .exam-cta-btn:hover { background: #b91c1c !important; transform: translateY(-2px) !important; }
+
+  @media (max-width: 768px) {
+    .desktop-nav { display: none !important; }
+    .hamburger-btn { display: flex !important; }
+    .contact-grid { flex-direction: column !important; }
+    .contact-form-col { min-width: unset !important; }
+    .contact-info-col { flex: unset !important; width: 100% !important; }
+  }
+  @media (min-width: 769px) {
+    .hamburger-btn { display: none !important; }
+    .mobile-menu-overlay { display: none !important; }
+  }
 `;
 
 // ── NAV DATA ───────────────────────────────────────────────────────────────────
@@ -96,19 +109,23 @@ export default function LandingPage({ setPage, user }) {
   const [sent, setSent]           = useState(false);
   const [sending, setSending]     = useState(false);
   const [form, setForm]           = useState({ name:'', phone:'', dob:'', email:'', role:'', course:'', msg:'' });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSubMenu, setMobileSubMenu]   = useState(null); // null | NAV item
   const contactRef  = useRef(null);
   const featuresRef = useRef(null);
   const entranceRef = useRef(null);
   const [authRedirect, setAuthRedirect] = useState(null);
 
-  const scrollTo = (ref) => { setDropdown(null); ref.current?.scrollIntoView({ behavior:'smooth' }); };
-  const openAuth = (tab = 'register') => { setAuthTab(tab); setShowAuth(true); setDropdown(null); };
+  const scrollTo = (ref) => { setDropdown(null); setMobileMenuOpen(false); ref.current?.scrollIntoView({ behavior:'smooth' }); };
+  const openAuth = (tab = 'register') => { setAuthTab(tab); setShowAuth(true); setDropdown(null); setMobileMenuOpen(false); };
   const openAuthWithRedirect = (tab = 'login', redirect = null) => {
     setAuthRedirect(redirect);
     setAuthTab(tab);
     setShowAuth(true);
     setDropdown(null);
+    setMobileMenuOpen(false);
   };
+
   useEffect(() => {
     if (!dropdown) return;
     const handler = (e) => {
@@ -117,6 +134,12 @@ export default function LandingPage({ setPage, user }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [dropdown]);
+
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
 
   // ── EmailJS contact form ───────────────────────────────────────────────────
   const handleContactSend = async () => {
@@ -155,6 +178,15 @@ export default function LandingPage({ setPage, user }) {
     }
   };
 
+  // ── Mobile menu item action ────────────────────────────────────────────────
+  const handleMobileNavItem = (navItem) => {
+    if (navItem.onItemClick === 'entrance') {
+      scrollTo(entranceRef);
+    } else if (navItem.onItemClick === 'auth') {
+      openAuth('register');
+    }
+  };
+
   return (
     <div style={{ fontFamily:"'Plus Jakarta Sans','Segoe UI',sans-serif", minHeight:'100vh', overflowX:'hidden' }}>
       <style>{GLOBAL_CSS}</style>
@@ -162,7 +194,7 @@ export default function LandingPage({ setPage, user }) {
       {/* ════════════════════ NAVBAR ════════════════════ */}
       <nav style={{
         position:'fixed', top:0, left:0, right:0, zIndex:1000,
-        height:68, padding:'0 44px',
+        height:68, padding:'0 24px',
         background:'rgba(255,255,255,.97)', backdropFilter:'blur(12px)',
         boxShadow:'0 1px 0 rgba(0,0,0,.07), 0 4px 24px rgba(0,0,0,.05)',
         display:'flex', alignItems:'center', justifyContent:'space-between',
@@ -170,7 +202,8 @@ export default function LandingPage({ setPage, user }) {
         <img src="/ielts-logo.png" alt="IELTS Instructor"
           style={{ height:40, width:'auto', display:'block', cursor:'pointer', userSelect:'none' }} />
 
-        <div style={{ display:'flex', gap:2 }}>
+        {/* Desktop nav */}
+        <div className="desktop-nav" style={{ display:'flex', gap:2 }}>
           {NAV.map(({ label, items, onItemClick }) => (
             <NavDropdown
               key={label} label={label} items={items}
@@ -188,16 +221,110 @@ export default function LandingPage({ setPage, user }) {
           ))}
         </div>
 
-        <button className="cta-btn" onClick={() => openAuth('login')}
-          style={{
-            background:`linear-gradient(135deg,${R},${RD})`, color:'white',
-            border:'none', padding:'11px 28px', borderRadius:50,
-            fontWeight:800, fontSize:15, cursor:'pointer',
-            boxShadow:`0 4px 16px rgba(220,38,38,.38)`,
-            transition:'all .22s', fontFamily:'inherit', letterSpacing:'-.1px'
-          }}
-        >Bắt đầu</button>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <button className="cta-btn" onClick={() => openAuth('login')}
+            style={{
+              background:`linear-gradient(135deg,${R},${RD})`, color:'white',
+              border:'none', padding:'11px 28px', borderRadius:50,
+              fontWeight:800, fontSize:15, cursor:'pointer',
+              boxShadow:`0 4px 16px rgba(220,38,38,.38)`,
+              transition:'all .22s', fontFamily:'inherit', letterSpacing:'-.1px'
+            }}
+          >Bắt đầu</button>
+
+          {/* Hamburger button */}
+          <button
+            className="hamburger-btn"
+            onClick={() => { setMobileMenuOpen(true); setMobileSubMenu(null); }}
+            style={{
+              display:'none', flexDirection:'column', justifyContent:'center', alignItems:'center',
+              gap:5, width:40, height:40, background:'transparent', border:'none', cursor:'pointer', padding:4,
+            }}
+          >
+            <span style={{ display:'block', width:22, height:2, background:'#333', borderRadius:2 }}/>
+            <span style={{ display:'block', width:22, height:2, background:'#333', borderRadius:2 }}/>
+            <span style={{ display:'block', width:22, height:2, background:'#333', borderRadius:2 }}/>
+          </button>
+        </div>
       </nav>
+
+      {/* ════════════════════ MOBILE MENU OVERLAY ════════════════════ */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-menu-overlay"
+          style={{ position:'fixed', inset:0, zIndex:2000, display:'flex' }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setMobileMenuOpen(false); setMobileSubMenu(null); } }}
+        >
+          {/* Backdrop */}
+          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)' }} onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }} />
+
+          {/* Panel */}
+          <div style={{
+            position:'relative', width:320, maxWidth:'85vw', height:'100%',
+            background:'white', boxShadow:'4px 0 40px rgba(0,0,0,0.18)',
+            display:'flex', flexDirection:'column', animation:'slideInLeft .22s ease',
+            zIndex:1,
+          }}>
+            {/* Panel header */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 20px', borderBottom:'1px solid #f0f0f0' }}>
+              {mobileSubMenu ? (
+                <button onClick={() => setMobileSubMenu(null)}
+                  style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', fontSize:15, fontWeight:700, color:'#333', fontFamily:'inherit', padding:0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                  {mobileSubMenu.label}
+                </button>
+              ) : (
+                <span style={{ fontSize:15, fontWeight:800, color:'#222' }}>Xin chào, Khách</span>
+              )}
+              <button onClick={() => { setMobileMenuOpen(false); setMobileSubMenu(null); }}
+                style={{ background:'#f4f4f5', border:'none', width:32, height:32, borderRadius:'50%', fontSize:18, cursor:'pointer', color:'#666', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                ×
+              </button>
+            </div>
+
+            {/* Panel body */}
+            <div style={{ flex:1, overflowY:'auto', padding:'8px 0' }}>
+              {!mobileSubMenu ? (
+                // Main menu
+                <>
+                  {NAV.map((navItem) => (
+                    <MobileMenuItem
+                      key={navItem.label}
+                      label={navItem.label}
+                      hasChildren={true}
+                      onClick={() => setMobileSubMenu(navItem)}
+                    />
+                  ))}
+                  <div style={{ height:1, background:'#f0f0f0', margin:'8px 20px' }} />
+                  <MobileMenuItem label="Đăng nhập" onClick={() => openAuth('login')} />
+                  <MobileMenuItem label="Đăng ký miễn phí" onClick={() => openAuth('register')} highlight />
+                </>
+              ) : (
+                // Sub menu items
+                mobileSubMenu.items.map((item) => (
+                  <div
+                    key={item.label}
+                    onClick={() => handleMobileNavItem(mobileSubMenu)}
+                    style={{ padding:'14px 20px', cursor:'pointer', borderBottom:'1px solid #f9f9f9' }}
+                    onMouseEnter={e => e.currentTarget.style.background = RL}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ fontSize:15, fontWeight:700, color:'#222', marginBottom:3 }}>{item.label}</div>
+                    <div style={{ fontSize:13, color:'#aaa' }}>{item.sub}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Panel footer */}
+            <div style={{ padding:'16px 20px', borderTop:'1px solid #f0f0f0', fontSize:12, color:'#bbb', textAlign:'center' }}>
+              © 2026 IELTS Instructor · ieltsinstructor.vn
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ════════════════════ HERO ════════════════════ */}
       <section style={{
@@ -345,91 +472,97 @@ export default function LandingPage({ setPage, user }) {
       </section>
 
       {/* ════════════════════ CONTACT ════════════════════ */}
-      <section style={{ background:'#f7f8fc', padding:'60px 40px' }} ref={contactRef}>
+      <section style={{ background:'#f7f8fc', padding:'60px 20px' }} ref={contactRef}>
         <div style={{
           maxWidth:1100, margin:'0 auto',
-          background:HERO_BG, borderRadius:28, padding:'60px 64px',
-          display:'flex', gap:64, alignItems:'flex-start', flexWrap:'wrap',
+          background:HERO_BG, borderRadius:28, padding:'48px 32px',
           position:'relative', overflow:'hidden',
         }}>
           <div style={{ position:'absolute', inset:0, opacity:.06, pointerEvents:'none',
             backgroundImage:'radial-gradient(circle, white 1px, transparent 1px)',
             backgroundSize:'40px 40px' }} />
 
-          <div style={{ flex:'1 1 260px', color:'white', position:'relative' }}>
-            <h2 style={{ fontSize:'clamp(28px,3vw,40px)', fontWeight:900, lineHeight:1.25, marginBottom:16, letterSpacing:'-.5px' }}>
-              Bạn còn<br />câu hỏi khác?
-            </h2>
-            <p style={{ opacity:.82, lineHeight:1.8, fontSize:15 }}>
-              Hãy để lại thông tin, IELTS Instructor sẽ liên hệ và hỗ trợ xử lý mọi vướng mắc của bạn.
-            </p>
-            <div style={{ marginTop:36, display:'flex', flexDirection:'column', gap:13 }}>
-              {['Tư vấn lộ trình miễn phí','Phản hồi trong 24h','Hỗ trợ 1-1 tận tình'].map(t => (
-                <div key={t} style={{ color:'rgba(255,255,255,.9)', fontSize:14, display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ color:'white', fontWeight:800 }}>✓</span>{t}
-                </div>
-              ))}
+          <div className="contact-grid" style={{ display:'flex', gap:48, alignItems:'flex-start', flexWrap:'wrap', position:'relative' }}>
+            {/* Info col */}
+            <div className="contact-info-col" style={{ flex:'1 1 220px', color:'white', minWidth:0 }}>
+              <h2 style={{ fontSize:'clamp(24px,3vw,40px)', fontWeight:900, lineHeight:1.25, marginBottom:16, letterSpacing:'-.5px' }}>
+                Bạn còn<br />câu hỏi khác?
+              </h2>
+              <p style={{ opacity:.82, lineHeight:1.8, fontSize:15 }}>
+                Hãy để lại thông tin, IELTS Instructor sẽ liên hệ và hỗ trợ xử lý mọi vướng mắc của bạn.
+              </p>
+              <div style={{ marginTop:28, display:'flex', flexDirection:'column', gap:12 }}>
+                {['Tư vấn lộ trình miễn phí','Phản hồi trong 24h','Hỗ trợ 1-1 tận tình'].map(t => (
+                  <div key={t} style={{ color:'rgba(255,255,255,.9)', fontSize:14, display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ color:'white', fontWeight:800 }}>✓</span>{t}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {sent ? (
-            <div style={{ flex:'1 1 400px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:14, minHeight:280 }}>
-              <div style={{ fontSize:48 }}>✅</div>
-              <h3 style={{ color:'white', fontWeight:900, fontSize:22 }}>Đã gửi thành công!</h3>
-              <p style={{ color:'rgba(255,255,255,.8)', textAlign:'center', lineHeight:1.6 }}>
-                IELTS Instructor sẽ liên hệ với bạn trong vòng 24 giờ.<br/>
-                Kiểm tra email để nhận xác nhận.
-              </p>
-              <button onClick={() => { setSent(false); setForm({ name:'', phone:'', dob:'', email:'', role:'', course:'', msg:'' }); }}
-                style={{ marginTop:8, background:'white', color:R, border:'none', padding:'10px 24px', borderRadius:50, fontWeight:700, cursor:'pointer', fontFamily:'inherit', fontSize:14 }}>
-                Gửi lại
-              </button>
-            </div>
-          ) : (
-            <div style={{ flex:'1 1 400px', display:'flex', flexDirection:'column', gap:14, position:'relative' }}>
-              <ContactField label="Họ và tên (*)" placeholder="Nhập họ và tên của bạn"
-                value={form.name}  onChange={v => setForm(f => ({...f, name:v}))} />
-              <ContactField label="Số điện thoại (*)" placeholder="09x xxx xxxx" prefix="+84"
-                value={form.phone} onChange={v => setForm(f => ({...f, phone:v}))} />
-              <div style={{ display:'flex', gap:12 }}>
-                <ContactField label="Năm sinh" placeholder="VD: 2000" style={{ flex:1 }}
-                  value={form.dob}   onChange={v => setForm(f => ({...f, dob:v}))} />
-                <ContactField label="Email" placeholder="Địa chỉ email" style={{ flex:1 }}
-                  value={form.email} onChange={v => setForm(f => ({...f, email:v}))} />
-              </div>
-              <ContactSelect label="Bạn là" options={['Học sinh THPT','Sinh viên đại học','Người đi làm','Khác']}
-                value={form.role}   onChange={v => setForm(f => ({...f, role:v}))} />
-              <ContactSelect label="Khóa học bạn quan tâm (*)" options={['Gói Free','Gói Premium']}
-                value={form.course} onChange={v => setForm(f => ({...f, course:v}))} />
-              <div>
-                <label style={{ color:'rgba(255,255,255,.85)', fontSize:13, fontWeight:600, display:'block', marginBottom:7 }}>Nội dung</label>
-                <textarea rows={4}
-                  placeholder={"Bạn có câu hỏi gì?\n• Trình độ hiện tại của bạn\n• Mục tiêu mong muốn"}
-                  value={form.msg} onChange={e => setForm(f => ({...f, msg:e.target.value}))}
-                  style={{ width:'100%', borderRadius:12, border:'1.5px solid rgba(255,255,255,.25)', background:'rgba(255,255,255,.13)', color:'white', padding:'12px 14px', fontSize:14, resize:'vertical', fontFamily:'inherit', backdropFilter:'blur(4px)' }}
-                />
-              </div>
-              <p style={{ color:'rgba(255,255,255,.55)', fontSize:11, fontStyle:'italic' }}>
-                Bằng việc gửi đăng ký tư vấn, bạn đã đồng ý với Chính sách bảo mật thông tin của IELTS Instructor.
-              </p>
-              <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                <button onClick={handleContactSend} disabled={sending} className="cta-btn"
-                  style={{
-                    background:'white', color:R, border:'none',
-                    padding:'13px 30px', borderRadius:50, fontWeight:800, fontSize:15,
-                    cursor: sending ? 'wait' : 'pointer',
-                    display:'flex', alignItems:'center', gap:8,
-                    boxShadow:'0 4px 18px rgba(0,0,0,.18)', transition:'all .2s', fontFamily:'inherit',
-                    opacity: sending ? 0.8 : 1,
-                  }}
-                >
-                  {sending ? (
-                    <><span style={{ width:16, height:16, border:'2px solid rgba(220,38,38,.3)', borderTop:`2px solid ${R}`, borderRadius:'50%', display:'inline-block', animation:'spin .7s linear infinite' }} />Đang gửi...</>
-                  ) : 'Gửi câu hỏi →'}
+            {/* Form col */}
+            {sent ? (
+              <div className="contact-form-col" style={{ flex:'1 1 300px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:14, minHeight:240 }}>
+                <div style={{ fontSize:48 }}>✅</div>
+                <h3 style={{ color:'white', fontWeight:900, fontSize:22 }}>Đã gửi thành công!</h3>
+                <p style={{ color:'rgba(255,255,255,.8)', textAlign:'center', lineHeight:1.6 }}>
+                  IELTS Instructor sẽ liên hệ với bạn trong vòng 24 giờ.<br/>
+                  Kiểm tra email để nhận xác nhận.
+                </p>
+                <button onClick={() => { setSent(false); setForm({ name:'', phone:'', dob:'', email:'', role:'', course:'', msg:'' }); }}
+                  style={{ marginTop:8, background:'white', color:R, border:'none', padding:'10px 24px', borderRadius:50, fontWeight:700, cursor:'pointer', fontFamily:'inherit', fontSize:14 }}>
+                  Gửi lại
                 </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="contact-form-col" style={{ flex:'1 1 300px', display:'flex', flexDirection:'column', gap:12, minWidth:0 }}>
+                <ContactField label="Họ và tên (*)" placeholder="Nhập họ và tên của bạn"
+                  value={form.name}  onChange={v => setForm(f => ({...f, name:v}))} />
+                <ContactField label="Số điện thoại (*)" placeholder="09x xxx xxxx" prefix="+84"
+                  value={form.phone} onChange={v => setForm(f => ({...f, phone:v}))} />
+
+                {/* Năm sinh + Email — stacked on mobile, row on desktop */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                  <ContactField label="Năm sinh" placeholder="VD: 2000"
+                    value={form.dob}   onChange={v => setForm(f => ({...f, dob:v}))} />
+                  <ContactField label="Email" placeholder="Địa chỉ email"
+                    value={form.email} onChange={v => setForm(f => ({...f, email:v}))} />
+                </div>
+
+                <ContactSelect label="Bạn là" options={['Học sinh THPT','Sinh viên đại học','Người đi làm','Khác']}
+                  value={form.role}   onChange={v => setForm(f => ({...f, role:v}))} />
+                <ContactSelect label="Khóa học bạn quan tâm (*)" options={['Gói Free','Gói Premium']}
+                  value={form.course} onChange={v => setForm(f => ({...f, course:v}))} />
+                <div>
+                  <label style={{ color:'rgba(255,255,255,.85)', fontSize:13, fontWeight:600, display:'block', marginBottom:7 }}>Nội dung</label>
+                  <textarea rows={3}
+                    placeholder={"Bạn có câu hỏi gì?\n• Trình độ hiện tại của bạn\n• Mục tiêu mong muốn"}
+                    value={form.msg} onChange={e => setForm(f => ({...f, msg:e.target.value}))}
+                    style={{ width:'100%', borderRadius:12, border:'1.5px solid rgba(255,255,255,.25)', background:'rgba(255,255,255,.13)', color:'white', padding:'12px 14px', fontSize:14, resize:'vertical', fontFamily:'inherit', backdropFilter:'blur(4px)' }}
+                  />
+                </div>
+                <p style={{ color:'rgba(255,255,255,.55)', fontSize:11, fontStyle:'italic' }}>
+                  Bằng việc gửi đăng ký tư vấn, bạn đã đồng ý với Chính sách bảo mật thông tin của IELTS Instructor.
+                </p>
+                <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                  <button onClick={handleContactSend} disabled={sending} className="cta-btn"
+                    style={{
+                      background:'white', color:R, border:'none',
+                      padding:'13px 30px', borderRadius:50, fontWeight:800, fontSize:15,
+                      cursor: sending ? 'wait' : 'pointer',
+                      display:'flex', alignItems:'center', gap:8,
+                      boxShadow:'0 4px 18px rgba(0,0,0,.18)', transition:'all .2s', fontFamily:'inherit',
+                      opacity: sending ? 0.8 : 1,
+                    }}
+                  >
+                    {sending ? (
+                      <><span style={{ width:16, height:16, border:'2px solid rgba(220,38,38,.3)', borderTop:`2px solid ${R}`, borderRadius:'50%', display:'inline-block', animation:'spin .7s linear infinite' }} />Đang gửi...</>
+                    ) : 'Gửi câu hỏi →'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -442,7 +575,7 @@ export default function LandingPage({ setPage, user }) {
       {/* ════════════════════ AUTH MODAL ════════════════════ */}
       {showAuth && (
         <div
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2000, animation:'fadeIn .2s ease' }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3000, animation:'fadeIn .2s ease', padding:'16px' }}
           onClick={e => { if (e.target === e.currentTarget) setShowAuth(false); }}
         >
           <div style={{ background:'white', borderRadius:24, padding:'40px', width:'100%', maxWidth:420, boxShadow:'0 24px 80px rgba(0,0,0,.35)', animation:'scaleIn .22s ease', position:'relative' }}>
@@ -460,7 +593,6 @@ export default function LandingPage({ setPage, user }) {
                 >{t.label}</button>
               ))}
             </div>
-            {/* Auth form — Supabase email/password */}
             <AuthForm tab={authTab} onClose={() => setShowAuth(false)} redirect={authRedirect} />
           </div>
         </div>
@@ -470,7 +602,32 @@ export default function LandingPage({ setPage, user }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Sub-components (unchanged)
+// Mobile menu item
+function MobileMenuItem({ label, hasChildren, onClick, highlight }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'15px 20px', cursor:'pointer',
+        borderBottom:'1px solid #f5f5f5',
+        background: highlight ? RL : 'transparent',
+        transition:'background .15s',
+      }}
+      onMouseEnter={e => { if (!highlight) e.currentTarget.style.background = '#fafafa'; }}
+      onMouseLeave={e => { if (!highlight) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <span style={{ fontSize:15, fontWeight: highlight ? 800 : 600, color: highlight ? R : '#222' }}>{label}</span>
+      {hasChildren && (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      )}
+    </div>
+  );
+}
+
+// ── Sub-components (unchanged) ─────────────────────────────────────────────────
 
 function NavDropdown({ label, items, open, onToggle, onClose, onItemClick }) {
   return (
@@ -574,12 +731,12 @@ function PricingCard({ title, price, originalPrice, badge, features, cta, onCta,
 
 function ContactField({ label, placeholder, prefix, value, onChange, style }) {
   return (
-    <div style={{ ...style }}>
+    <div style={{ ...style, minWidth:0 }}>
       <label style={{ color:'rgba(255,255,255,.85)', fontSize:13, fontWeight:600, display:'block', marginBottom:7 }}>{label}</label>
       <div style={{ display:'flex', alignItems:'center', background:'rgba(255,255,255,.14)', borderRadius:12, border:'1.5px solid rgba(255,255,255,.25)', overflow:'hidden', backdropFilter:'blur(4px)' }}>
         {prefix && <span style={{ color:'rgba(255,255,255,.8)', padding:'0 12px', fontSize:14, fontWeight:700, borderRight:'1px solid rgba(255,255,255,.2)', whiteSpace:'nowrap' }}>{prefix}</span>}
         <input type="text" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
-          style={{ flex:1, background:'transparent', border:'none', color:'white', padding:'12px 14px', fontSize:14, fontFamily:'inherit' }}/>
+          style={{ flex:1, background:'transparent', border:'none', color:'white', padding:'12px 14px', fontSize:14, fontFamily:'inherit', minWidth:0 }}/>
       </div>
     </div>
   );
@@ -598,12 +755,7 @@ function ContactSelect({ label, options, value, onChange }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// AUTH FORM — Supabase Email + Password
-// Sau khi đăng nhập/đăng ký thành công, useAuth() trong App.jsx nhận user mới
-// → App tự re-render → MainLayout (dashboard) hiện ra. Không cần setPage ở đây.
-// ══════════════════════════════════════════════════════════════════════════════
-
+// ── AUTH FORM ──────────────────────────────────────────────────────────────────
 function AuthForm({ tab, onClose, redirect }) {
   const [email,     setEmail]     = useState('');
   const [password,  setPassword]  = useState('');
@@ -620,7 +772,6 @@ function AuthForm({ tab, onClose, redirect }) {
     setLoading(true); setError('');
     try {
       await signIn({ email, password });
-      // useAuth() sẽ cập nhật → App re-render → modal tự đóng khi user truthy
       onClose();
       navigate(redirect ? `/${redirect}` : '/dashboard');
     } catch (e) {
@@ -656,15 +807,11 @@ function AuthForm({ tab, onClose, redirect }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-      {/* Full name — chỉ hiện khi register */}
       {tab === 'register' && (
         <FocusInput label="Họ và tên" placeholder="Nguyễn Văn A" type="text" value={fullName} onChange={setFullName} />
       )}
-
       <FocusInput label="Email" placeholder="email@cua.ban" type="email" value={email} onChange={setEmail} />
       <FocusInput label="Mật khẩu" placeholder={tab === 'register' ? 'Tối thiểu 8 ký tự' : 'Mật khẩu của bạn'} type="password" value={password} onChange={setPassword} />
-
-      {/* Band mục tiêu — chỉ register */}
       {tab === 'register' && (
         <div>
           <label style={{ fontSize:13, fontWeight:700, color:'#555', display:'block', marginBottom:7 }}>Band mục tiêu (không bắt buộc)</label>
@@ -678,19 +825,16 @@ function AuthForm({ tab, onClose, redirect }) {
           </div>
         </div>
       )}
-
       {tab === 'login' && (
         <div style={{ textAlign:'right', marginTop:-6 }}>
           <a href="#" style={{ fontSize:13, color:R, textDecoration:'none', fontWeight:600 }}>Quên mật khẩu?</a>
         </div>
       )}
-
       {error && (
         <div style={{ fontSize:13, color:'#EF4444', background:'#FEF2F2', padding:'10px 14px', borderRadius:10 }}>
           {error}
         </div>
       )}
-
       <button
         onClick={tab === 'login' ? handleLogin : handleRegister}
         disabled={loading}
@@ -708,13 +852,11 @@ function AuthForm({ tab, onClose, redirect }) {
           : tab === 'login' ? 'Đăng nhập' : 'Tạo tài khoản miễn phí'
         }
       </button>
-
       <p style={{ textAlign:'center', fontSize:12, color:'#bbb', marginTop:4 }}>© 2026 IELTS Instructor · ieltsinstructor.vn</p>
     </div>
   );
 }
 
-// Input với focus border highlight
 function FocusInput({ label, placeholder, type = 'text', value, onChange }) {
   const [focused, setFocused] = useState(false);
   return (
