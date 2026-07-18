@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
-// Tắt bodyParser mặc định của Vercel để lấy được raw body gốc
-// (cần thiết để tính chữ ký HMAC khớp với SePay)
 export const config = {
   api: {
     bodyParser: false,
@@ -16,7 +14,6 @@ const supabase = createClient(
 
 const SEPAY_WEBHOOK_SECRET = process.env.SEPAY_WEBHOOK_SECRET
 
-// Đọc raw body dạng buffer/string từ request stream
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
     let data = ''
@@ -41,7 +38,6 @@ export default async function handler(req, res) {
       ? signatureHeader.slice(7)
       : signatureHeader
 
-    // Lấy raw body gốc (chuỗi thô, chưa qua parse) để tính đúng chữ ký
     const rawBody = await getRawBody(req)
 
     const expectedSignature = crypto
@@ -52,7 +48,7 @@ export default async function handler(req, res) {
     console.error('DEBUG - Secret length:', SEPAY_WEBHOOK_SECRET?.length)
     console.error('DEBUG - Received signature:', signature)
     console.error('DEBUG - Expected signature:', expectedSignature)
-    console.error('DEBUG - Raw body:', rawBody
+    console.error('DEBUG - Raw body:', rawBody)
 
     if (signature.length !== expectedSignature.length) {
       console.error('Độ dài chữ ký không khớp - có thể sai secret hoặc định dạng')
@@ -69,7 +65,6 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid signature' })
     }
 
-    // Giờ mới parse JSON để lấy dữ liệu, sau khi đã xác thực chữ ký xong
     const body = JSON.parse(rawBody)
     const { content, transferAmount, referenceCode } = body
 
