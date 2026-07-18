@@ -49,10 +49,10 @@ export default async function handler(req, res) {
       .update(rawBody)
       .digest('hex')
 
-    console.log('DEBUG - Secret length:', SEPAY_WEBHOOK_SECRET?.length)
-    console.log('DEBUG - Received signature:', signature)
-    console.log('DEBUG - Expected signature:', expectedSignature)
-    console.log('DEBUG - Raw body:', rawBody)
+    console.error('DEBUG - Secret length:', SEPAY_WEBHOOK_SECRET?.length)
+    console.error('DEBUG - Received signature:', signature)
+    console.error('DEBUG - Expected signature:', expectedSignature)
+    console.error('DEBUG - Raw body:', rawBody
 
     if (signature.length !== expectedSignature.length) {
       console.error('Độ dài chữ ký không khớp - có thể sai secret hoặc định dạng')
