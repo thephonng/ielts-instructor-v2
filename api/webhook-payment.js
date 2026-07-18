@@ -29,36 +29,34 @@ export default async function handler(req, res) {
   }
 
   try {
-    const signatureHeader = req.headers['x-sepay-signature']
-    if (!signatureHeader) {
+    const signature = req.headers['x-sepay-signature']
+    const timestamp = req.headers['x-sepay-timestamp']
+
+    if (!signature) {
       console.error('Thiếu header x-sepay-signature')
       return res.status(401).json({ error: 'Missing signature' })
     }
-    const signature = signatureHeader.startsWith('sha256=')
-      ? signatureHeader.slice(7)
-      : signatureHeader
+    if (!timestamp) {
+      console.error('Thiếu header x-sepay-timestamp')
+      return res.status(401).json({ error: 'Missing timestamp' })
+    }
 
     const rawBody = await getRawBody(req)
 
-    const expectedSignature = crypto
+    const expectedSignature = 'sha256=' + crypto
       .createHmac('sha256', SEPAY_WEBHOOK_SECRET)
-      .update(rawBody)
+      .update(timestamp + '.' + rawBody)
       .digest('hex')
 
-    console.error('DEBUG - Secret length:', SEPAY_WEBHOOK_SECRET?.length)
-    console.error('DEBUG - Received signature:', signature)
-    console.error('DEBUG - Expected signature:', expectedSignature)
-    console.error('DEBUG - Raw body:', rawBody)
+    const signatureBuffer = Buffer.from(signature)
+    const expectedBuffer = Buffer.from(expectedSignature)
 
-    if (signature.length !== expectedSignature.length) {
+    if (signatureBuffer.length !== expectedBuffer.length) {
       console.error('Độ dài chữ ký không khớp - có thể sai secret hoặc định dạng')
       return res.status(401).json({ error: 'Invalid signature format' })
     }
 
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    )
+    const isValid = crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
 
     if (!isValid) {
       console.error('Chữ ký không khớp - có thể là request giả mạo')
