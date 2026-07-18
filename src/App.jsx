@@ -591,7 +591,7 @@ export default function App() {
           <Route path="/testpractice"  element={<TestPractice  user={user} profile={profile} isPremium={isPremium} />} />
           <Route path="/profile" element={<Profile user={user} profile={profile} onProfileUpdate={setProfile} isPremium={isPremium} />} />
           <Route path="/leaderboard"   element={<Leaderboard   user={user} />} />
-          <Route path="/subscription"  element={<Subscription  user={user} profile={profile} />} />
+          <Route path="/subscription"  element={<Subscription  user={user} profile={profile} isPremium={isPremium} />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
