@@ -18,19 +18,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const signature = req.headers['x-sepay-signature']
-
-    if (!signature) {
+    const signatureHeader = req.headers['x-sepay-signature']
+    if (!signatureHeader) {
       console.error('Thiếu header x-sepay-signature')
       return res.status(401).json({ error: 'Missing signature' })
     }
+    // SePay gửi chữ ký dạng "sha256=xxxx", cần bỏ tiền tố trước khi so sánh
+    const signature = signatureHeader.startsWith('sha256=')
+      ? signatureHeader.slice(7)
+      : signatureHeader
 
     const rawBody = JSON.stringify(req.body)
-
     const expectedSignature = crypto
       .createHmac('sha256', SEPAY_WEBHOOK_SECRET)
       .update(rawBody)
       .digest('hex')
+
+    // Bảo vệ thêm: nếu độ dài khác nhau, coi như không hợp lệ (tránh crash)
+    if (signature.length !== expectedSignature.length) {
+      console.error('Độ dài chữ ký không khớp - có thể sai secret hoặc định dạng')
+      return res.status(401).json({ error: 'Invalid signature format' })
+    }
 
     const isValid = crypto.timingSafeEqual(
       Buffer.from(signature),
