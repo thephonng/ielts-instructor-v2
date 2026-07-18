@@ -1,16 +1,30 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
-// Dùng SERVICE ROLE KEY (không phải anon key) vì đây là server code,
-// cần quyền ghi vào bảng payments/profiles bỏ qua Row Level Security.
+// Tắt bodyParser mặc định của Vercel để lấy được raw body gốc
+// (cần thiết để tính chữ ký HMAC khớp với SePay)
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Secret key HMAC lấy từ SePay (whsec_...) - lưu trong biến môi trường Vercel,
-// KHÔNG được viết thẳng vào code.
 const SEPAY_WEBHOOK_SECRET = process.env.SEPAY_WEBHOOK_SECRET
+
+// Đọc raw body dạng buffer/string từ request stream
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    req.on('data', chunk => { data += chunk })
+    req.on('end', () => resolve(data))
+    req.on('error', reject)
+  })
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -23,18 +37,18 @@ export default async function handler(req, res) {
       console.error('Thiếu header x-sepay-signature')
       return res.status(401).json({ error: 'Missing signature' })
     }
-    // SePay gửi chữ ký dạng "sha256=xxxx", cần bỏ tiền tố trước khi so sánh
     const signature = signatureHeader.startsWith('sha256=')
       ? signatureHeader.slice(7)
       : signatureHeader
 
-    const rawBody = JSON.stringify(req.body)
+    // Lấy raw body gốc (chuỗi thô, chưa qua parse) để tính đúng chữ ký
+    const rawBody = await getRawBody(req)
+
     const expectedSignature = crypto
       .createHmac('sha256', SEPAY_WEBHOOK_SECRET)
       .update(rawBody)
       .digest('hex')
 
-    // Bảo vệ thêm: nếu độ dài khác nhau, coi như không hợp lệ (tránh crash)
     if (signature.length !== expectedSignature.length) {
       console.error('Độ dài chữ ký không khớp - có thể sai secret hoặc định dạng')
       return res.status(401).json({ error: 'Invalid signature format' })
@@ -50,11 +64,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid signature' })
     }
 
-    const {
-      content,
-      transferAmount,
-      referenceCode,
-    } = req.body
+    // Giờ mới parse JSON để lấy dữ liệu, sau khi đã xác thực chữ ký xong
+    const body = JSON.parse(rawBody)
+    const { content, transferAmount, referenceCode } = body
 
     const orderCodeMatch = content?.match(/IELTS\d{6}/)
     const orderCode = orderCodeMatch ? orderCodeMatch[0] : null
@@ -81,18 +93,13 @@ export default async function handler(req, res) {
     }
 
     if (transferAmount && transferAmount < payment.amount) {
-      console.error(
-        `Số tiền không khớp: nhận ${transferAmount}, cần ${payment.amount}`
-      )
+      console.error(`Số tiền không khớp: nhận ${transferAmount}, cần ${payment.amount}`)
       return res.status(200).json({ message: 'Amount mismatch, needs manual review' })
     }
 
     const { error: paymentError } = await supabase
       .from('payments')
-      .update({
-        status: 'verified',
-        verified_at: new Date().toISOString(),
-      })
+      .update({ status: 'verified', verified_at: new Date().toISOString() })
       .eq('id', payment.id)
 
     if (paymentError) {
@@ -105,10 +112,7 @@ export default async function handler(req, res) {
 
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({
-        plan: 'premium',
-        plan_expires_at: expiresAt.toISOString(),
-      })
+      .update({ plan: 'premium', plan_expires_at: expiresAt.toISOString() })
       .eq('id', payment.user_id)
 
     if (profileError) {
