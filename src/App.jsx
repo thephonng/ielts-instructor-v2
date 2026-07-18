@@ -553,7 +553,7 @@ export default function App() {
       .then(({ data }) => setProfile(data))
   }, [user])
 
-  const isPremium = profile?.plan === 'premium'
+  const isPremium = profile?.plan === 'premium' &&
     (!profile?.plan_expires_at || new Date(profile.plan_expires_at) > new Date())
 
   if (loading) return <LoadingScreen />
