@@ -269,9 +269,13 @@ function PaymentStep({ user, onNext, onBack }) {
   }
 
   const handleConfirm = () => {
-    setConfirmed(true)
-    setTimeout(() => onNext(), 1500)
-  }
+      setConfirmed(true)
+      startPaymentPolling(
+        orderCode,
+        () => onNext(),
+        () => setConfirmed(false)
+      )
+    }
 
   const bankInfo = [
     { label: 'Ngân hàng',    val: 'MB Bank', key: '' },
