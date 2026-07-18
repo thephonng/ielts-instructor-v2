@@ -554,6 +554,7 @@ export default function App() {
   }, [user])
 
   const isPremium = profile?.plan === 'premium'
+    (!profile?.plan_expires_at || new Date(profile.plan_expires_at) > new Date())
 
   if (loading) return <LoadingScreen />
 
