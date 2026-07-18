@@ -7,8 +7,8 @@ const RD = '#991B1B'
 const RL = '#FEF2F2'
 const GRAD = `linear-gradient(135deg, ${R}, ${RD})`
 
-const BANK_ID      = 'VCB'
-const ACCOUNT_NO   = '9906104665'
+const BANK_ID      = 'MB'
+const ACCOUNT_NO   = '0906104665'
 const ACCOUNT_NAME = 'HOANG THE PHONG'
 const AMOUNT       = 99000
 
@@ -274,13 +274,12 @@ function PaymentStep({ user, onNext, onBack }) {
   }
 
   const bankInfo = [
-    { label: 'Ngân hàng',    val: 'Vietcombank (VCB)', key: '' },
+    { label: 'Ngân hàng',    val: 'MB Bank', key: '' },
     { label: 'Số tài khoản', val: ACCOUNT_NO, key: 'acc' },
     { label: 'Chủ tài khoản',val: ACCOUNT_NAME, key: '' },
     { label: 'Số tiền',      val: '99.000 VNĐ', key: '', bold: true, color: R },
-    { label: 'Nội dung CK',  val: email, key: 'code', bold: true },
+    { label: 'Nội dung CK',  val: orderCode || 'Đang tạo mã...', key: 'code', bold: true },
   ]
-
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {qrZoom && <QrModal src={qrUrl} onClose={() => setQrZoom(false)} />}
@@ -377,7 +376,7 @@ function PaymentStep({ user, onNext, onBack }) {
                 </div>
               ))}
               <div style={{ marginTop: 12, background: RL, border: `1px solid rgba(185,28,28,.2)`, borderRadius: 10, padding: '10px 12px', fontSize: 12, color: RD, lineHeight: 1.6 }}>
-                Nhập đúng nội dung <strong>{email}</strong> để admin xác nhận đúng tài khoản của bạn.
+                Nhập đúng nội dung <strong>{orderCode || 'đang tạo mã...'}</strong> để hệ thống tự động xác nhận thanh toán.
               </div>
             </div>
           )}
@@ -388,7 +387,7 @@ function PaymentStep({ user, onNext, onBack }) {
           {/* Order summary */}
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 20 }}>
             <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: '#111' }}>Tóm tắt đơn hàng</p>
-            {[['Gói Premium', '99.000đ'], ['Thời hạn', '1 tháng'], ['Tài khoản', email], ['Giảm giá', '200.000đ']].map(([l, v], i) => (
+            {[['Gói Premium', '99.000đ'], ['Thời hạn', '1 tháng'], ['Mã đơn hàng', orderCode || '...'], ['Giảm giá', '200.000đ']].map(([l, v], i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '7px 0', borderBottom: '1px solid #f3f4f6', gap: 8 }}>
                 <span style={{ color: '#888', flexShrink: 0 }}>{l}</span>
                 <span style={{ fontWeight: 500, textAlign: 'right', wordBreak: 'break-all' }}>{v}</span>
