@@ -242,9 +242,23 @@ function PaymentStep({ user, onNext, onBack }) {
   const [copied, setCopied] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [qrZoom, setQrZoom] = useState(false)
+  const [orderCode, setOrderCode] = useState('')
+  const [orderError, setOrderError] = useState('')
 
   const email = user?.email || ''
-  const addInfo = encodeURIComponent(email)
+
+  // Tạo đơn hàng thật trong database ngay khi user vào bước thanh toán
+  useEffect(() => {
+    if (!user?.id) return
+    createPaymentOrder(user.id)
+      .then(order => setOrderCode(order.orderCode))
+      .catch(err => {
+        console.error('Lỗi tạo đơn hàng:', err)
+        setOrderError('Không thể tạo đơn hàng, vui lòng thử lại')
+      })
+  }, [user?.id])
+
+  const addInfo = encodeURIComponent(orderCode || email)
   const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${AMOUNT}&addInfo=${addInfo}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`
   const timerPct = (left / (15 * 60)) * 100
 
