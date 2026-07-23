@@ -1,15 +1,15 @@
 import { supabase } from './supabase';
 
 export function bandFromScore(score) {
-  if (score <= 8)  return 4.0;
-  if (score <= 12) return 5.0;
-  if (score <= 14) return 5.5;
-  if (score <= 18) return 6.0;
-  if (score <= 22) return 6.5;
-  if (score <= 26) return 7.0;
-  if (score <= 30) return 7.5;
-  if (score <= 32) return 8.0;
-  if (score <= 34) return 8.5;
+  if (score <= 12)  return 4.0;
+  if (score <= 14) return 5.0;
+  if (score <= 16) return 5.5;
+  if (score <= 24) return 6.0;
+  if (score <= 26) return 6.5;
+  if (score <= 28) return 7.0;
+  if (score <= 32) return 7.5;
+  if (score <= 34) return 8.0;
+  if (score <= 36) return 8.5;
   return 9.0;
 }
 
