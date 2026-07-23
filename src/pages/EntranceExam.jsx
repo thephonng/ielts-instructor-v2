@@ -1067,25 +1067,31 @@ export default function EntranceExam({ user }) {
     if (submitted) return;
     setSubmitted(true);
     clearInterval(timerRef.current);
-
+  
+    const isCorrect = (q) => {
+      const ua = (answers[q.id] ?? '').toString().trim().toLowerCase();
+      const ca = (q.correct_answer ?? '').toString().trim().toLowerCase();
+      return ua !== '' && ua === ca;
+    };
+  
     const listeningQs = questions.filter(q => q.skill === 'listening');
     const readingQs   = questions.filter(q => q.skill === 'reading');
-    const listeningScore = listeningQs.filter(q => answers[q.id] === q.correct_answer).length;
-    const readingScore   = readingQs.filter(q => answers[q.id] === q.correct_answer).length;
+    const listeningScore = listeningQs.filter(isCorrect).length;
+    const readingScore   = readingQs.filter(isCorrect).length;
     const totalScore     = listeningScore + readingScore;
     const estimatedBand  = bandFromScore(totalScore);
-
+  
     try {
       await saveExamResult({ userId: user.id, listeningScore, readingScore, totalScore, estimatedBand });
     } catch (err) {
       console.error('Failed to save exam result:', err);
     }
-
+  
     setResult({
       listeningScore, readingScore, totalScore, estimatedBand,
       listeningTotal: listeningQs.length, readingTotal: readingQs.length,
     });
-  }
+}
 
   if (loading) return <LoadingScreen />;
   if (loadError) return <ErrorScreen message={loadError} onBack={() => navigate('/dashboard')} />;
